@@ -81,7 +81,8 @@ public class ReconhecedorFacial {
                 .subscribe();
     }
 
-    private void treinaReconhecedor(Flux<Pessoa> pessoasFlux) {
+    @SuppressWarnings("resource")
+	private void treinaReconhecedor(Flux<Pessoa> pessoasFlux) {
         List<FaceCapturada> listaFacesCapturadas = new ArrayList<>();
         pessoasFlux
         .doAfterTerminate(() -> {
@@ -102,56 +103,46 @@ public class ReconhecedorFacial {
             }
         })
         .subscribe(pessoa -> {
-            var converteMat = new OpenCVFrameConverter.ToMat();
-            var frameGrabber = new FFmpegFrameGrabber(new ByteArrayInputStream(pessoa.getVideo()));
-            try {
+        	try {
+	            var converteMat = new OpenCVFrameConverter.ToMat();
+	            var frameGrabber = new FFmpegFrameGrabber(new ByteArrayInputStream(pessoa.getVideo()));
                 frameGrabber.start();
-            } catch (FrameGrabber.Exception e) {
-                e.printStackTrace();
-            }
-
-            Frame frameCapturado = null;
-            var imagemColorida = new Mat();
-            int lengthInVideoFrames = frameGrabber.getLengthInVideoFrames();
-            for (int frameCount = 0; frameCount < lengthInVideoFrames; frameCount++) {
-                try {
+	
+	            Frame frameCapturado = null;
+	            var imagemColorida = new Mat();
+	            int lengthInVideoFrames = frameGrabber.getLengthInVideoFrames();
+	            for (int frameCount = 0; frameCount < lengthInVideoFrames; frameCount++) {
                     frameCapturado = frameGrabber.grab();
-                } catch (FrameGrabber.Exception e) {
-                    e.printStackTrace();
-                }
-                imagemColorida = converteMat.convert(frameCapturado);
-                var imagemCinza = new Mat();
-                if (imagemColorida != null) {
-                    var imagemRotacionada = new Mat();
-
-                    if(!pessoa.getNome().equals("Melanie")) {
-                        var rawCenter = new Point2f(imagemColorida.cols() / 2.0F, imagemColorida.rows() / 2.0F);
-
-                        double scale = 1.0;
-                        int rotation = 90;
-
-                        var rotationMatrix = getRotationMatrix2D(rawCenter, rotation, scale);
-
-                        warpAffine(imagemColorida, imagemRotacionada, rotationMatrix, imagemColorida.size());
-                    } else {
-                        imagemRotacionada = imagemColorida;
-                    }
-                    cvtColor(imagemRotacionada, imagemCinza, COLOR_BGRA2GRAY);
-                    var facesDetectadas = this.identificadorFaces.getFacesDetectadas(imagemCinza);
-                    for (int i = 0; i < facesDetectadas.size(); i++) {
-                        Rect dadosFace = facesDetectadas.get(i);
-                        var faceCapturadaMat = new Mat(imagemCinza, dadosFace);
-                        resize(faceCapturadaMat, faceCapturadaMat, new Size(160, 160));
-                        listaFacesCapturadas.add(new FaceCapturada(faceCapturadaMat, pessoa.getClasse()));
-                    }
-                }
-            }
-            try {
-                frameGrabber.stop();
+	                imagemColorida = converteMat.convert(frameCapturado);
+	                var imagemCinza = new Mat();
+	                if (imagemColorida != null) {
+	                    var imagemRotacionada = new Mat();
+	
+	                    var rawCenter = new Point2f(imagemColorida.cols() / 2.0F, imagemColorida.rows() / 2.0F);
+	
+	                    double scale = 1.0;
+	                    int rotation = 90;
+	
+	                    var rotationMatrix = getRotationMatrix2D(rawCenter, rotation, scale);
+	
+	                    warpAffine(imagemColorida, imagemRotacionada, rotationMatrix, imagemColorida.size());
+	                    cvtColor(imagemRotacionada, imagemCinza, COLOR_BGRA2GRAY);
+	                    var facesDetectadas = this.identificadorFaces.getFacesDetectadas(imagemCinza);
+	                    for (int i = 0; i < facesDetectadas.size(); i++) {
+	                        Rect dadosFace = facesDetectadas.get(i);
+	                        var faceCapturadaMat = new Mat(imagemCinza, dadosFace);
+	                        resize(faceCapturadaMat, faceCapturadaMat, new Size(160, 160));
+	                        listaFacesCapturadas.add(new FaceCapturada(faceCapturadaMat, pessoa.getClasse()));
+	                    }
+	                }
+	            }
+	 
+	            frameGrabber.stop();
+	            logger.info("Finalizou a extração");
             } catch (FrameGrabber.Exception e) {
                 e.printStackTrace();
+                logger.error("erro ao extrair fotos de vídeo", e);
             }
-            logger.info("Finalizou a extração");
         });
     }
 
