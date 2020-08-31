@@ -1,12 +1,13 @@
 package org.fatec.scs.reconhecimentofacial.dto.auxiliar;
 
+import java.time.LocalDateTime;
+
 import org.fatec.scs.reconhecimentofacial.dto.enums.StatusReconhecimento;
 import org.fatec.scs.reconhecimentofacial.model.Pessoa;
 import org.fatec.scs.reconhecimentofacial.util.FluxSinkPredicaoConfianca;
-import org.fatec.scs.reconhecimentofacial.util.MonoSinkReconhecimento;
-import reactor.core.publisher.Flux;
+import org.fatec.scs.reconhecimentofacial.util.MonoSinkPessoa;
 
-import java.time.LocalDateTime;
+import reactor.core.publisher.Flux;
 
 public class Reconhecimento {
     private Pessoa pessoa;
@@ -16,15 +17,15 @@ public class Reconhecimento {
     private LocalDateTime horaInicial;
     private Flux<PredicaoConfianca> predicoes;
     private FluxSinkPredicaoConfianca fluxSinkPredicaoConfianca;
-    private MonoSinkReconhecimento monoSinkReconhecimento;
+    private MonoSinkPessoa monoSinkPessoa;
     private StatusReconhecimento statusReconhecimento;
 
     public Reconhecimento() {
     }
 
-    public Reconhecimento(LocalDateTime horaInicial, MonoSinkReconhecimento monoSinkReconhecimento) {
+    public Reconhecimento(LocalDateTime horaInicial, MonoSinkPessoa monoSinkPessoa) {
         this.horaInicial = horaInicial;
-        this.monoSinkReconhecimento = monoSinkReconhecimento;
+        this.monoSinkPessoa = monoSinkPessoa;
         this.fluxSinkPredicaoConfianca = new FluxSinkPredicaoConfianca();
         this.predicoes = Flux.create(this.fluxSinkPredicaoConfianca);
     }
@@ -69,14 +70,6 @@ public class Reconhecimento {
         this.horaInicial = horaInicial;
     }
 
-    public MonoSinkReconhecimento getMonoSinkReconhecimento() {
-        return monoSinkReconhecimento;
-    }
-
-    public void setMonoSinkReconhecimento(MonoSinkReconhecimento monoSinkReconhecimento) {
-        this.monoSinkReconhecimento = monoSinkReconhecimento;
-    }
-
     public int getFotosReconhecidas() {
         return fotosReconhecidas;
     }
@@ -100,4 +93,13 @@ public class Reconhecimento {
     public void setFluxSinkPredicaoConfianca(FluxSinkPredicaoConfianca fluxSinkPredicaoConfianca) {
         this.fluxSinkPredicaoConfianca = fluxSinkPredicaoConfianca;
     }
+
+	public MonoSinkPessoa getMonoSinkPessoa() {
+		return monoSinkPessoa;
+	}
+
+	public void setMonoSinkPessoa(MonoSinkPessoa monoSinkPessoa) {
+		this.monoSinkPessoa = monoSinkPessoa;
+	}
+    
 }

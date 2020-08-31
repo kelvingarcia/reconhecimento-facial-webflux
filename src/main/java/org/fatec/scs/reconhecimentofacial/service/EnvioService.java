@@ -1,5 +1,9 @@
 package org.fatec.scs.reconhecimentofacial.service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.stream.Stream;
+
 import org.fatec.scs.reconhecimentofacial.component.ReconhecedorFacial;
 import org.fatec.scs.reconhecimentofacial.dto.auxiliar.PredicaoConfianca;
 import org.fatec.scs.reconhecimentofacial.dto.auxiliar.Reconhecimento;
@@ -10,16 +14,14 @@ import org.fatec.scs.reconhecimentofacial.dto.response.PessoaDTO;
 import org.fatec.scs.reconhecimentofacial.dto.response.ReconheceResponse;
 import org.fatec.scs.reconhecimentofacial.model.Pessoa;
 import org.fatec.scs.reconhecimentofacial.repository.PessoaRepository;
-import org.fatec.scs.reconhecimentofacial.util.MonoSinkReconhecimento;
+import org.fatec.scs.reconhecimentofacial.util.MonoSinkPessoa;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
 
 @Service
 public class EnvioService {
@@ -46,16 +48,17 @@ public class EnvioService {
                 .flatMap(rec -> rec.getPredicoes());
     }
 
-    public Mono<Reconhecimento> reconhecePessoa(String id) {
-        MonoSinkReconhecimento monoSinkReconhecimento = new MonoSinkReconhecimento();
-        Reconhecimento reconhecimento = new Reconhecimento(LocalDateTime.now(), monoSinkReconhecimento);
+    public Mono<PessoaDTO> reconhecePessoa(String id) {
+//        MonoSinkReconhecimento monoSinkReconhecimento = new MonoSinkReconhecimento();
+    	MonoSinkPessoa monoSinkPessoa = new MonoSinkPessoa();
+        Reconhecimento reconhecimento = new Reconhecimento(LocalDateTime.now(), monoSinkPessoa);
         this.pessoaRepository.findById(id).subscribe(pessoa -> {
             reconhecimento.setPessoa(pessoa);
             this.reconhecimentoFlux = this.reconhecimentoFlux
                     .filter(rec -> !rec.getPessoa().getId().equals(id))
                     .concatWithValues(reconhecimento);
         });
-        return Mono.create(monoSinkReconhecimento)
+        return Mono.create(monoSinkPessoa)
                 .timeout(Duration.ofMinutes(30), Mono.empty())
                 .doOnCancel(() -> logger.debug("teste"));
     }
@@ -76,10 +79,10 @@ public class EnvioService {
 
             if (reconhecimento.getNumeroFotos() >= 5 && reconhecimento.getFotosReconhecidas() / reconhecimento.getNumeroFotos() >= 0.8) {
                 reconhecimento.setStatusReconhecimento(StatusReconhecimento.RECONHECIDO_CORRETAMENTE);
-                reconhecimento.getMonoSinkReconhecimento().publishReconhecimento(reconhecimento);
+                reconhecimento.getMonoSinkPessoa().publishPessoa(new PessoaDTO(reconhecimento.getPessoa().getId(), reconhecimento.getPessoa().getNome(), reconhecimento.getPessoa().getClasse()));
             } else if (reconhecimento.getNumeroFotos() > 7 && !(reconhecimento.getFotosReconhecidas() / reconhecimento.getNumeroFotos() >= 0.8)) {
                 reconhecimento.setStatusReconhecimento(StatusReconhecimento.RECONHECIDO_INCORRETAMENTE);
-                reconhecimento.getMonoSinkReconhecimento().publishReconhecimento(reconhecimento);
+                reconhecimento.getMonoSinkPessoa().publishPessoa(new PessoaDTO(reconhecimento.getPessoa().getId(), reconhecimento.getPessoa().getNome(), reconhecimento.getPessoa().getClasse()));
             }
         });
         return Mono.just(new ReconheceResponse(reconheceRequest.getIdPessoa(),
@@ -87,6 +90,7 @@ public class EnvioService {
     }
 
     public Mono<Pessoa> treina(TreinaRequest treinaRequest) {
+    	logger.info("Treinamento recebido");
         return this.pessoaRepository.save(new Pessoa(
                 treinaRequest.getNome(),
                 treinaRequest.getEmail(),
@@ -100,6 +104,13 @@ public class EnvioService {
     }
 
     public Flux<PessoaDTO> getPessoasBanco(){
+    	logger.info("Recebeu requisição");
         return this.pessoaRepository.findAll().map(pessoa -> new PessoaDTO(pessoa.getId(), pessoa.getNome(), pessoa.getClasse()));
     }
+    
+    public Flux<PessoaDTO> mensagemStream(){
+		return Flux.fromStream(
+				Stream.generate(() -> new PessoaDTO("teste", "Olá", 1))
+		).delayElements(Duration.ofSeconds(3));
+	}
 }

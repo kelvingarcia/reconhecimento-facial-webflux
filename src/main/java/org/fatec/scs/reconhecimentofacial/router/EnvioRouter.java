@@ -1,7 +1,9 @@
 package org.fatec.scs.reconhecimentofacial.router;
 
+import static org.springframework.web.reactive.function.server.RouterFunctions.route;
+import static org.springframework.web.reactive.function.server.ServerResponse.ok;
+
 import org.fatec.scs.reconhecimentofacial.dto.auxiliar.PredicaoConfianca;
-import org.fatec.scs.reconhecimentofacial.dto.auxiliar.Reconhecimento;
 import org.fatec.scs.reconhecimentofacial.dto.request.ReconheceRequest;
 import org.fatec.scs.reconhecimentofacial.dto.request.TreinaRequest;
 import org.fatec.scs.reconhecimentofacial.dto.response.PessoaDTO;
@@ -14,9 +16,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
-
-import static org.springframework.web.reactive.function.server.RouterFunctions.route;
-import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
 @Configuration
 public class EnvioRouter {
@@ -39,7 +38,12 @@ public class EnvioRouter {
                 .GET("/esperaReconhecimento/{id}", req -> ok()
                         .contentType(MediaType.APPLICATION_STREAM_JSON)
                         .body(envioService.reconhecePessoa(req.pathVariable("id")),
-                        Reconhecimento.class
+                        PessoaDTO.class
+                ))
+                .GET("/testaFlux", req -> ok()
+                        .contentType(MediaType.TEXT_EVENT_STREAM)
+                        .body(envioService.mensagemStream(),
+                        PessoaDTO.class
                 ))
                 .GET("/predicoes/{id}", req -> ok().contentType(MediaType.TEXT_EVENT_STREAM)
                         .body(envioService.testaPredicao(req.pathVariable("id")), PredicaoConfianca.class)
@@ -48,4 +52,5 @@ public class EnvioRouter {
                 .GET("/email/{email}", req -> ok().body(envioService.buscaPorEmail(req.pathVariable("email")), Pessoa.class))
                 .build();
     }
+    
 }

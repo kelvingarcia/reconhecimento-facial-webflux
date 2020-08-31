@@ -1,6 +1,7 @@
 spring:
-  codec:
-    max-in-memory-size: 15MB
+  data:
+    mongodb:
+      uri: mongodb+srv://kelvingarcia:teste@kelvingarcia-sqn7o.mongodb.net/reconhecimentofacial?retryWrites=true&w=majority
 
 server:
   port: 8085
