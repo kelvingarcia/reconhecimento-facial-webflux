@@ -116,16 +116,20 @@ public class ReconhecedorFacial {
 	                imagemColorida = converteMat.convert(frameCapturado);
 	                var imagemCinza = new Mat();
 	                if (imagemColorida != null) {
-	                    var imagemRotacionada = new Mat();
-	
-	                    var rawCenter = new Point2f(imagemColorida.cols() / 2.0F, imagemColorida.rows() / 2.0F);
-	
-	                    double scale = 1.0;
-	                    int rotation = 90;
-	
-	                    var rotationMatrix = getRotationMatrix2D(rawCenter, rotation, scale);
-	
-	                    warpAffine(imagemColorida, imagemRotacionada, rotationMatrix, imagemColorida.size());
+                        var imagemRotacionada = new Mat();
+	                    if(pessoa.isMobile()) {
+
+                            var rawCenter = new Point2f(imagemColorida.cols() / 2.0F, imagemColorida.rows() / 2.0F);
+
+                            double scale = 1.0;
+                            int rotation = 90;
+
+                            var rotationMatrix = getRotationMatrix2D(rawCenter, rotation, scale);
+
+                            warpAffine(imagemColorida, imagemRotacionada, rotationMatrix, imagemColorida.size());
+                        } else {
+	                        imagemRotacionada = imagemColorida;
+                        }
 	                    cvtColor(imagemRotacionada, imagemCinza, COLOR_BGRA2GRAY);
 	                    var facesDetectadas = this.identificadorFaces.getFacesDetectadas(imagemCinza);
 	                    for (int i = 0; i < facesDetectadas.size(); i++) {
@@ -139,6 +143,7 @@ public class ReconhecedorFacial {
 	 
 	            frameGrabber.stop();
 	            logger.info("Finalizou a extração");
+                System.out.println("Quantidade de faces: " + listaFacesCapturadas.size());
             } catch (FrameGrabber.Exception e) {
                 e.printStackTrace();
                 logger.error("erro ao extrair fotos de vídeo", e);

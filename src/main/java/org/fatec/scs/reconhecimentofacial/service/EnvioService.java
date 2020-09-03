@@ -1,9 +1,12 @@
 package org.fatec.scs.reconhecimentofacial.service;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.stream.Stream;
 
+import org.fatec.scs.reconhecimentofacial.component.IdentificadorFaces;
 import org.fatec.scs.reconhecimentofacial.component.ReconhecedorFacial;
 import org.fatec.scs.reconhecimentofacial.dto.auxiliar.PredicaoConfianca;
 import org.fatec.scs.reconhecimentofacial.dto.auxiliar.Reconhecimento;
@@ -33,6 +36,9 @@ public class EnvioService {
 
     @Autowired
     private PessoaRepository pessoaRepository;
+
+    @Autowired
+    private IdentificadorFaces identificadorFaces;
 
     private Flux<Reconhecimento> reconhecimentoFlux;
 
@@ -91,11 +97,39 @@ public class EnvioService {
 
     public Mono<Pessoa> treina(TreinaRequest treinaRequest) {
     	logger.info("Treinamento recebido");
+        try {
+            FileOutputStream fileOutputStream = new FileOutputStream("src\\main\\resources\\video\\video.mp4");
+            fileOutputStream.write(treinaRequest.getVideo());
+            fileOutputStream.close();
+        } catch (Exception e) {
+            logger.error("Erro ao salvar vídeo", e);
+        }
+        this.identificadorFaces.quantidadeDeFaces(treinaRequest.getVideo());
         return this.pessoaRepository.save(new Pessoa(
                 treinaRequest.getNome(),
                 treinaRequest.getEmail(),
                 this.reconhecedorFacial.getProximaClasse().getAndIncrement(),
-                treinaRequest.getVideo()
+                treinaRequest.getVideo(),
+                false
+        ));
+    }
+
+    public Mono<Pessoa> treinaMobile(TreinaRequest treinaRequest) {
+        logger.info("Treinamento recebido");
+        try {
+            FileOutputStream fileOutputStream = new FileOutputStream("src\\main\\resources\\video\\videoMobile.mp4");
+            fileOutputStream.write(treinaRequest.getVideo());
+            fileOutputStream.close();
+        } catch (Exception e) {
+            logger.error("Erro ao salvar vídeo", e);
+        }
+        this.identificadorFaces.quantidadeDeFacesMobile(treinaRequest.getVideo());
+        return this.pessoaRepository.save(new Pessoa(
+                treinaRequest.getNome(),
+                treinaRequest.getEmail(),
+                this.reconhecedorFacial.getProximaClasse().getAndIncrement(),
+                treinaRequest.getVideo(),
+                true
         ));
     }
     

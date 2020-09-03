@@ -27,6 +27,10 @@ public class EnvioRouter {
     public RouterFunction<ServerResponse> routes() {
         return route()
                 .POST("/envioTreinamento", req -> ok().body(
+                        req.bodyToMono(TreinaRequest.class).flatMap(t -> envioService.treinaMobile(t)),
+                        Pessoa.class
+                ))
+                .POST("/envioTreinamentoWeb", req -> ok().body(
                         req.bodyToMono(TreinaRequest.class).flatMap(t -> envioService.treina(t)),
                         Pessoa.class
                 ))

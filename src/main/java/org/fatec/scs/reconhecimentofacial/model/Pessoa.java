@@ -10,16 +10,18 @@ public class Pessoa {
     private String nome;
     private String email;
     private int classe;
+    private boolean mobile;
     private byte[] video;
 
     public Pessoa() {
     }
 
-    public Pessoa(String nome, String email, int classe, byte[] video) {
+    public Pessoa(String nome, String email, int classe, byte[] video, boolean mobile) {
         this.nome = nome;
         this.email = email;
         this.classe = classe;
         this.video = video;
+        this.mobile = mobile;
     }
 
     public String getEmail() {
@@ -60,5 +62,13 @@ public class Pessoa {
 
     public void setVideo(byte[] video) {
         this.video = video;
+    }
+
+    public boolean isMobile() {
+        return mobile;
+    }
+
+    public void setMobile(boolean mobile) {
+        this.mobile = mobile;
     }
 }
