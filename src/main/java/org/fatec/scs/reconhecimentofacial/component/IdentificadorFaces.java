@@ -91,7 +91,7 @@ public class IdentificadorFaces {
 
             Frame frameCapturado = null;
             var imagemColorida = new Mat();
-            int lengthInVideoFrames = frameGrabber.getLengthInVideoFrames();
+            int lengthInVideoFrames = frameGrabber.getLengthInFrames();
             for (int frameCount = 0; frameCount < lengthInVideoFrames; frameCount++) {
                 frameCapturado = frameGrabber.grab();
                 imagemColorida = converteMat.convert(frameCapturado);

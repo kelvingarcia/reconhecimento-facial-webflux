@@ -110,8 +110,8 @@ public class ReconhecedorFacial {
 	
 	            Frame frameCapturado = null;
 	            var imagemColorida = new Mat();
-	            int lengthInVideoFrames = frameGrabber.getLengthInVideoFrames();
-	            for (int frameCount = 0; frameCount < lengthInVideoFrames; frameCount++) {
+	            int lengthInVideoFrames = frameGrabber.getLengthInFrames();
+	            for (int frameCount = 0; frameCount < 100; frameCount++) {
                     frameCapturado = frameGrabber.grab();
 	                imagemColorida = converteMat.convert(frameCapturado);
 	                var imagemCinza = new Mat();
