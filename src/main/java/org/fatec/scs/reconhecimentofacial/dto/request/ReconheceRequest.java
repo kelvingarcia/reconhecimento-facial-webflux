@@ -1,22 +1,15 @@
 package org.fatec.scs.reconhecimentofacial.dto.request;
 
-public class ReconheceRequest {
-    private String idPessoa;
-    private byte[] foto;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
-    public byte[] getFoto() {
-        return foto;
+public class ReconheceRequest{
+    private byte[] video;
+
+    public byte[] getVideo() {
+        return video;
     }
 
-    public void setFoto(byte[] foto) {
-        this.foto = foto;
-    }
-
-    public String getIdPessoa() {
-        return idPessoa;
-    }
-
-    public void setIdPessoa(String idPessoa) {
-        this.idPessoa = idPessoa;
+    public void setVideo(byte[] video) {
+        this.video = video;
     }
 }

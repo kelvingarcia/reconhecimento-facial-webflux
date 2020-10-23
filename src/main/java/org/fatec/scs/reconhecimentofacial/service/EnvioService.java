@@ -2,10 +2,13 @@ package org.fatec.scs.reconhecimentofacial.service;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.stream.Stream;
 
+import org.bytedeco.javacv.FrameFilter;
 import org.fatec.scs.reconhecimentofacial.component.IdentificadorFaces;
 import org.fatec.scs.reconhecimentofacial.component.ReconhecedorFacial;
 import org.fatec.scs.reconhecimentofacial.dto.auxiliar.PredicaoConfianca;
@@ -46,105 +49,60 @@ public class EnvioService {
         this.reconhecimentoFlux = Flux.empty();
     }
 
-    public Flux<PredicaoConfianca> testaPredicao(String id) {
-        return this.reconhecimentoFlux
-                .filter(rec ->
-                        rec.getPessoa().getId().equals(id)
-                )
-                .flatMap(rec -> rec.getPredicoes());
+    public Mono<Reconhecimento> reconhecePessoa(byte[] video) {
+        try {
+            Files.write(Paths.get("src/main/resources/video/novoReconhecimento.mp4"), video);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return this.reconhecedorFacial.reconhecePessoa(video);
     }
 
-    public Mono<PessoaDTO> reconhecePessoa(String id) {
-//        MonoSinkReconhecimento monoSinkReconhecimento = new MonoSinkReconhecimento();
-    	MonoSinkPessoa monoSinkPessoa = new MonoSinkPessoa();
-        Reconhecimento reconhecimento = new Reconhecimento(LocalDateTime.now(), monoSinkPessoa);
-        this.pessoaRepository.findById(id).subscribe(pessoa -> {
-            reconhecimento.setPessoa(pessoa);
-            this.reconhecimentoFlux = this.reconhecimentoFlux
-                    .filter(rec -> !rec.getPessoa().getId().equals(id))
-                    .concatWithValues(reconhecimento);
-        });
-        return Mono.create(monoSinkPessoa)
-                .timeout(Duration.ofMinutes(30), Mono.empty())
-                .doOnCancel(() -> logger.debug("teste"));
-    }
-
-    public Mono<ReconheceResponse> mandaFotoParaReconhecimento(ReconheceRequest reconheceRequest) {
-        this.reconhecimentoFlux
-        .filter(rec ->
-                rec.getPessoa().getId().equals(reconheceRequest.getIdPessoa())
-        )
-        .subscribe(reconhecimento -> {
-            PredicaoConfianca predicaoConfianca = this.reconhecedorFacial.reconhecePessoa(reconheceRequest.getFoto());
-            int predicao = predicaoConfianca.predicao();
-            reconhecimento.getFluxSinkPredicaoConfianca().publishPredicaoConfianca(predicaoConfianca);
-            reconhecimento.setNumeroFotos(reconhecimento.getNumeroFotos() + 1);
-            if (predicao == reconhecimento.getPessoa().getClasse()) {
-                reconhecimento.setFotosReconhecidas(reconhecimento.getFotosReconhecidas() + 1);
-            }
-
-            if (reconhecimento.getNumeroFotos() >= 5 && reconhecimento.getFotosReconhecidas() / reconhecimento.getNumeroFotos() >= 0.8) {
-                reconhecimento.setStatusReconhecimento(StatusReconhecimento.RECONHECIDO_CORRETAMENTE);
-                reconhecimento.getMonoSinkPessoa().publishPessoa(new PessoaDTO(reconhecimento.getPessoa().getId(), reconhecimento.getPessoa().getNome(), reconhecimento.getPessoa().getClasse()));
-            } else if (reconhecimento.getNumeroFotos() > 7 && !(reconhecimento.getFotosReconhecidas() / reconhecimento.getNumeroFotos() >= 0.8)) {
-                reconhecimento.setStatusReconhecimento(StatusReconhecimento.RECONHECIDO_INCORRETAMENTE);
-                reconhecimento.getMonoSinkPessoa().publishPessoa(new PessoaDTO(reconhecimento.getPessoa().getId(), reconhecimento.getPessoa().getNome(), reconhecimento.getPessoa().getClasse()));
-            }
-        });
-        return Mono.just(new ReconheceResponse(reconheceRequest.getIdPessoa(),
-                "Aguarde a resposta no endpoint /esperaReconhecimento passando o id da pessoa"));
-    }
-
-    public Mono<Pessoa> treina(TreinaRequest treinaRequest) {
+    public Mono<PessoaDTO> treina(TreinaRequest treinaRequest) {
     	logger.info("Treinamento recebido");
         try {
-            FileOutputStream fileOutputStream = new FileOutputStream("src\\main\\resources\\video\\video.mp4");
-            fileOutputStream.write(treinaRequest.getVideo());
-            fileOutputStream.close();
-        } catch (Exception e) {
-            logger.error("Erro ao salvar vídeo", e);
+            Files.write(Paths.get("src/main/resources/video/novoReconhecimento.mp4"), treinaRequest.getVideo());
+        }catch (Exception e){
+            e.printStackTrace();
         }
-        this.identificadorFaces.quantidadeDeFaces(treinaRequest.getVideo());
         return this.pessoaRepository.save(new Pessoa(
                 treinaRequest.getNome(),
                 treinaRequest.getEmail(),
                 this.reconhecedorFacial.getProximaClasse().getAndIncrement(),
                 treinaRequest.getVideo(),
                 false
-        ));
+        )).map(pessoa -> new PessoaDTO(pessoa.getId(), pessoa.getNome(), pessoa.getEmail(), pessoa.getClasse()));
     }
 
-    public Mono<Pessoa> treinaMobile(TreinaRequest treinaRequest) {
+    public Mono<PessoaDTO> treinaMobile(TreinaRequest treinaRequest) {
         logger.info("Treinamento recebido");
-        try {
-            FileOutputStream fileOutputStream = new FileOutputStream("src\\main\\resources\\video\\videoMobile.mp4");
-            fileOutputStream.write(treinaRequest.getVideo());
-            fileOutputStream.close();
-        } catch (Exception e) {
-            logger.error("Erro ao salvar vídeo", e);
-        }
-        this.identificadorFaces.quantidadeDeFacesMobile(treinaRequest.getVideo());
         return this.pessoaRepository.save(new Pessoa(
                 treinaRequest.getNome(),
                 treinaRequest.getEmail(),
                 this.reconhecedorFacial.getProximaClasse().getAndIncrement(),
                 treinaRequest.getVideo(),
                 true
-        ));
+        )).map(pessoa -> new PessoaDTO(pessoa.getId(), pessoa.getNome(), pessoa.getEmail(), pessoa.getClasse()));
     }
     
     public Mono<Pessoa> buscaPorEmail(String email) {
     	return this.pessoaRepository.findByEmail(email);
     }
 
+    public Mono<PessoaDTO> buscaPorId(String id){
+        return this.pessoaRepository.findById(id)
+                .map(pessoa -> new PessoaDTO(pessoa.getId(), pessoa.getNome(), pessoa.getEmail(), pessoa.getClasse()));
+    }
+
     public Flux<PessoaDTO> getPessoasBanco(){
     	logger.info("Recebeu requisição");
-        return this.pessoaRepository.findAll().map(pessoa -> new PessoaDTO(pessoa.getId(), pessoa.getNome(), pessoa.getClasse()));
+        return this.pessoaRepository.findAll().map(pessoa -> new PessoaDTO(pessoa.getId(), pessoa.getNome(), pessoa.getEmail(), pessoa.getClasse()));
     }
-    
-    public Flux<PessoaDTO> mensagemStream(){
-		return Flux.fromStream(
-				Stream.generate(() -> new PessoaDTO("teste", "Olá", 1))
-		).delayElements(Duration.ofSeconds(3));
-	}
+
+    public Mono<String> deletaPessoa(String nome){
+        this.pessoaRepository.findByNome(nome)
+            .subscribe(pessoa -> this.pessoaRepository.delete(pessoa));
+        return Mono.just("Deletou");
+    }
+
 }
