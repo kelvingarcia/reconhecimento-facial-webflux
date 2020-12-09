@@ -1,16 +1,7 @@
 package org.fatec.scs.reconhecimentofacial.dto.auxiliar;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.fatec.scs.reconhecimentofacial.dto.enums.StatusReconhecimento;
 import org.fatec.scs.reconhecimentofacial.dto.response.PessoaDTO;
-import org.fatec.scs.reconhecimentofacial.model.Pessoa;
-import org.fatec.scs.reconhecimentofacial.util.FluxSinkPredicaoConfianca;
-import org.fatec.scs.reconhecimentofacial.util.MonoSinkPessoa;
-
-import reactor.core.publisher.Flux;
 
 public class Reconhecimento {
     private PessoaDTO pessoa;

@@ -1,26 +1,15 @@
 package org.fatec.scs.reconhecimentofacial.service;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.stream.Stream;
 
-import org.bytedeco.javacv.FrameFilter;
 import org.fatec.scs.reconhecimentofacial.component.IdentificadorFaces;
 import org.fatec.scs.reconhecimentofacial.component.ReconhecedorFacial;
-import org.fatec.scs.reconhecimentofacial.dto.auxiliar.PredicaoConfianca;
 import org.fatec.scs.reconhecimentofacial.dto.auxiliar.Reconhecimento;
-import org.fatec.scs.reconhecimentofacial.dto.enums.StatusReconhecimento;
-import org.fatec.scs.reconhecimentofacial.dto.request.ReconheceRequest;
 import org.fatec.scs.reconhecimentofacial.dto.request.TreinaRequest;
 import org.fatec.scs.reconhecimentofacial.dto.response.PessoaDTO;
-import org.fatec.scs.reconhecimentofacial.dto.response.ReconheceResponse;
 import org.fatec.scs.reconhecimentofacial.model.Pessoa;
 import org.fatec.scs.reconhecimentofacial.repository.PessoaRepository;
-import org.fatec.scs.reconhecimentofacial.util.MonoSinkPessoa;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
