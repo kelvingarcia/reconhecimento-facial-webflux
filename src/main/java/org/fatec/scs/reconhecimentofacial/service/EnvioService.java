@@ -101,7 +101,7 @@ public class EnvioService {
 
     public Mono<String> deletaPessoa(String nome){
         this.pessoaRepository.findByNome(nome)
-            .subscribe(pessoa -> this.pessoaRepository.delete(pessoa));
+            .subscribe(pessoa -> this.pessoaRepository.delete(pessoa).subscribe());
         return Mono.just("Deletou");
     }
 

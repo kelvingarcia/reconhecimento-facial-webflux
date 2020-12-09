@@ -76,6 +76,7 @@ public class ReconhecedorFacial {
     @EventListener(ApplicationReadyEvent.class)
     public void escutaBanco() {
         Flux<Pessoa> pessoaFlux = this.pessoaRepository.findAll();
+        pessoaFlux.subscribe(pessoa -> System.out.println(pessoa.getId() + ", " + pessoa.getNome()));
         pessoaFlux.count().subscribe(valor -> this.proximaClasse = new AtomicInteger(Math.toIntExact(valor) + 1));
         this.treinaReconhecedor(pessoaFlux);
         mongoTemplate
